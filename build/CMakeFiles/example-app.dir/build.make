@@ -73,15 +73,15 @@ CMakeFiles/example-app.dir/Detection.cpp.o: CMakeFiles/example-app.dir/flags.mak
 CMakeFiles/example-app.dir/Detection.cpp.o: /Users/ijuchang/Downloads/cpp/Detection.cpp
 CMakeFiles/example-app.dir/Detection.cpp.o: CMakeFiles/example-app.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/ijuchang/Downloads/cpp/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/example-app.dir/Detection.cpp.o"
-	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/example-app.dir/Detection.cpp.o -MF CMakeFiles/example-app.dir/Detection.cpp.o.d -o CMakeFiles/example-app.dir/Detection.cpp.o -c /Users/ijuchang/Downloads/cpp/Detection.cpp
+	/opt/homebrew/bin/aarch64-unknown-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/example-app.dir/Detection.cpp.o -MF CMakeFiles/example-app.dir/Detection.cpp.o.d -o CMakeFiles/example-app.dir/Detection.cpp.o -c /Users/ijuchang/Downloads/cpp/Detection.cpp
 
 CMakeFiles/example-app.dir/Detection.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/example-app.dir/Detection.cpp.i"
-	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ijuchang/Downloads/cpp/Detection.cpp > CMakeFiles/example-app.dir/Detection.cpp.i
+	/opt/homebrew/bin/aarch64-unknown-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/ijuchang/Downloads/cpp/Detection.cpp > CMakeFiles/example-app.dir/Detection.cpp.i
 
 CMakeFiles/example-app.dir/Detection.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/example-app.dir/Detection.cpp.s"
-	/Library/Developer/CommandLineTools/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ijuchang/Downloads/cpp/Detection.cpp -o CMakeFiles/example-app.dir/Detection.cpp.s
+	/opt/homebrew/bin/aarch64-unknown-linux-gnu-g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/ijuchang/Downloads/cpp/Detection.cpp -o CMakeFiles/example-app.dir/Detection.cpp.s
 
 # Object files for target example-app
 example__app_OBJECTS = \
@@ -92,21 +92,21 @@ example__app_EXTERNAL_OBJECTS =
 
 example-app: CMakeFiles/example-app.dir/Detection.cpp.o
 example-app: CMakeFiles/example-app.dir/build.make
-example-app: /usr/local/lib/libopencv_gapi.4.8.0.dylib
-example-app: /usr/local/lib/libopencv_highgui.4.8.0.dylib
-example-app: /usr/local/lib/libopencv_ml.4.8.0.dylib
-example-app: /usr/local/lib/libopencv_objdetect.4.8.0.dylib
-example-app: /usr/local/lib/libopencv_photo.4.8.0.dylib
-example-app: /usr/local/lib/libopencv_stitching.4.8.0.dylib
-example-app: /usr/local/lib/libopencv_video.4.8.0.dylib
-example-app: /usr/local/lib/libopencv_videoio.4.8.0.dylib
-example-app: /usr/local/lib/libopencv_imgcodecs.4.8.0.dylib
-example-app: /usr/local/lib/libopencv_dnn.4.8.0.dylib
-example-app: /usr/local/lib/libopencv_calib3d.4.8.0.dylib
-example-app: /usr/local/lib/libopencv_features2d.4.8.0.dylib
-example-app: /usr/local/lib/libopencv_flann.4.8.0.dylib
-example-app: /usr/local/lib/libopencv_imgproc.4.8.0.dylib
-example-app: /usr/local/lib/libopencv_core.4.8.0.dylib
+example-app: /Users/ijuchang/Downloads/build_opencv_linux/lib/libopencv_gapi.so.4.8.0
+example-app: /Users/ijuchang/Downloads/build_opencv_linux/lib/libopencv_highgui.so.4.8.0
+example-app: /Users/ijuchang/Downloads/build_opencv_linux/lib/libopencv_ml.so.4.8.0
+example-app: /Users/ijuchang/Downloads/build_opencv_linux/lib/libopencv_objdetect.so.4.8.0
+example-app: /Users/ijuchang/Downloads/build_opencv_linux/lib/libopencv_photo.so.4.8.0
+example-app: /Users/ijuchang/Downloads/build_opencv_linux/lib/libopencv_stitching.so.4.8.0
+example-app: /Users/ijuchang/Downloads/build_opencv_linux/lib/libopencv_video.so.4.8.0
+example-app: /Users/ijuchang/Downloads/build_opencv_linux/lib/libopencv_videoio.so.4.8.0
+example-app: /Users/ijuchang/Downloads/build_opencv_linux/lib/libopencv_imgcodecs.so.4.8.0
+example-app: /Users/ijuchang/Downloads/build_opencv_linux/lib/libopencv_dnn.so.4.8.0
+example-app: /Users/ijuchang/Downloads/build_opencv_linux/lib/libopencv_calib3d.so.4.8.0
+example-app: /Users/ijuchang/Downloads/build_opencv_linux/lib/libopencv_features2d.so.4.8.0
+example-app: /Users/ijuchang/Downloads/build_opencv_linux/lib/libopencv_flann.so.4.8.0
+example-app: /Users/ijuchang/Downloads/build_opencv_linux/lib/libopencv_imgproc.so.4.8.0
+example-app: /Users/ijuchang/Downloads/build_opencv_linux/lib/libopencv_core.so.4.8.0
 example-app: CMakeFiles/example-app.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/ijuchang/Downloads/cpp/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable example-app"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/example-app.dir/link.txt --verbose=$(VERBOSE)
