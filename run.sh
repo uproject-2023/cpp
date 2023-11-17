@@ -8,7 +8,7 @@ if [ -z "${model_name}" ]; then
     exit 1
 fi
 
-app_file="${script_path}/example-app"
+app_file="${script_path}/build/example-app"
 model_dir="${script_path}/model"
 model_file="${model_name}.onnx"
 model_path="${model_dir}/${model_file}"
@@ -30,4 +30,5 @@ fi
 ln -sf "${model_file}" "${link_file}"
 
 echo "Running app..."
+chmod a+x "${app_file}"
 "${app_file}"
