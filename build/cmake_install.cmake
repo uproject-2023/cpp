@@ -39,7 +39,7 @@ endif()
 
 # Set default install directory permissions.
 if(NOT DEFINED CMAKE_OBJDUMP)
-  set(CMAKE_OBJDUMP "/opt/homebrew/bin/aarch64-unknown-linux-gnu-objdump")
+  set(CMAKE_OBJDUMP "/usr/bin/objdump")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)

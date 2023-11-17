@@ -10,9 +10,9 @@
 
 const float INPUT_WIDTH = 640.0;
 const float INPUT_HEIGHT = 640.0;
-const float SCORE_THRESHOLD = 0.3;
-const float NMS_THRESHOLD = 0.25;
-const float CONFIDENCE_THRESHOLD = 0.25;
+const float SCORE_THRESHOLD = 0.5;
+const float NMS_THRESHOLD = 0.45;
+const float CONFIDENCE_THRESHOLD = 0.45;
 
 const float FONT_SCALE = 0.7;
 const int FONT_FACE = cv::FONT_HERSHEY_SIMPLEX;
@@ -23,7 +23,6 @@ cv::Scalar BLUE = cv::Scalar(255, 178, 50);
 cv::Scalar YELLOW = cv::Scalar(0, 255, 255);
 cv::Scalar RED = cv::Scalar(0, 0, 255);
 
-
 class Detection {
 private:
     std::unique_ptr<cv::dnn::Net> net;
@@ -31,7 +30,7 @@ private:
 public:
     Detection() {
         // read model
-        this->net = std::make_unique<cv::dnn::Net>(cv::dnn::readNet("../model/last.onnx"));
+        this->net = std::make_unique<cv::dnn::Net>(cv::dnn::readNet("../model/yolov5n.onnx"));
         // set cuda
         this->net->setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
 	    this->net->setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
@@ -78,7 +77,7 @@ public:
         float x_factor = input_image.cols / INPUT_WIDTH;
         float y_factor = input_image.rows / INPUT_HEIGHT;
         float *data = (float *)outputs[0].data;
-        const int dimensions = 22;
+        const int dimensions = 24;
         const int rows = 25200;
 
         for (int i = 0; i < rows; ++i) {
@@ -109,7 +108,7 @@ public:
                                        width, height));
                 }   
             }
-            data += 22;
+            data += 24;
         }	
         std::vector<int> indices;
         cv::dnn::NMSBoxes(boxes, confidences, SCORE_THRESHOLD,
@@ -163,7 +162,7 @@ void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uin
 
 int main()
 {
-    /* set audio */
+    /* set audio file */
     ma_result result;
     ma_decoder decoder;
     ma_device_config deviceConfig;
@@ -173,6 +172,7 @@ int main()
         return -2;
     }
     
+    /* set audio */
     ma_data_source_set_looping(&decoder, MA_TRUE);
     deviceConfig = ma_device_config_init(ma_device_type_playback);
     deviceConfig.playback.format   = decoder.outputFormat;
@@ -183,7 +183,7 @@ int main()
 
 
     Detection detection;
-    std::vector<std::string> class_list{"dog","person","cat","tv","car","meatballs","marinara sauce","tomato soup","chicken noodle soup","french onion soup","chicken breast","ribs","pulled pork","hamburger","cavity","awake","drowsy"};
+    std::vector<std::string> class_list{"dog","person","cat","tv","car","meatballs","marinara sauce","tomato soup","chicken noodle soup","french onion soup","chicken breast","ribs","pulled pork","hamburger","cavity","awake","drowsy","Look_Forward","yelling"};
     std::vector<cv::Mat> detections;
     cv::VideoCapture cap(0);
     cv::Mat frame;
@@ -208,7 +208,7 @@ int main()
             ma_device_stop(&device);
         }
 
-        if (drowsy_cnt > 10) { // looping audio file
+        if (drowsy_cnt > 5) { // looping audio file
             if (!playing) {
                 playing = true;
                 ma_device_start(&device);
@@ -219,7 +219,7 @@ int main()
         std::string label = cv::format("Inference time : %.2f ms", t);
         cv::putText(img, label, cv::Point(20, 40), FONT_FACE,
                     FONT_SCALE, RED);
-        cv::imshow("Output", std::move(img));
+        cv::imshow("Output", std::move(img)); // show result
         if (cv::waitKey(27) >= 0) break;
     }
 
