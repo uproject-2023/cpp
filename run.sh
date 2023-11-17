@@ -13,6 +13,7 @@ model_dir="${script_path}/model"
 model_file="${model_name}.onnx"
 model_path="${model_dir}/${model_file}"
 link_file="${model_dir}/yolov5n.onnx"
+original_dir="$(pwd)"
 
 if [ ! -e "${model_path}" ]; then
     echo "Error: Model file '${model_path}' not found."
@@ -31,4 +32,6 @@ ln -sf "${model_file}" "${link_file}"
 
 echo "Running app..."
 chmod a+x "${app_file}"
+cd "$(dirname "${app_file}")" || exit
 "${app_file}"
+cd "${original_dir}" || exit

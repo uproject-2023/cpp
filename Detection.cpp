@@ -30,7 +30,7 @@ private:
 public:
     Detection() {
         // read model
-        this->net = std::make_unique<cv::dnn::Net>(cv::dnn::readNet("../model/model.onnx"));
+        this->net = std::make_unique<cv::dnn::Net>(cv::dnn::readNet("../model/yolov5n.onnx"));
         // set cuda
         this->net->setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
 	    this->net->setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
