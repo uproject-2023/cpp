@@ -202,9 +202,9 @@ int main()
                                              detections, class_list);
         if (!drowsy) {
             if (detection.getDetectedId() == static_cast<int>(State::drowsy)) {
-                drowsy_cnt += 1.5;
+                drowsy_cnt += 1.7;
             } else if (detection.getDetectedId() == static_cast<int>(State::Look_Forward)) {
-                drowsy_cnt += 0.7;
+                drowsy_cnt += 0.9;
             } else if (detection.getDetectedId() == static_cast<int>(State::yelling)) {
                 drowsy_cnt += 3.5;
             }
@@ -217,7 +217,7 @@ int main()
             }
         } else {
             if (detection.getDetectedId() == static_cast<int>(State::awake)) {
-                drowsy_cnt += 2.0;
+                drowsy_cnt += 2.2;
             }
 
             if (drowsy_cnt >= 100.0) { // stop audio file
