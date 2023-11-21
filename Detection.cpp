@@ -18,19 +18,24 @@ const float FONT_SCALE = 0.7;
 const int FONT_FACE = cv::FONT_HERSHEY_SIMPLEX;
 const int THICKNESS = 1;
 
+
 cv::Scalar BLACK = cv::Scalar(0, 0, 0);
 cv::Scalar BLUE = cv::Scalar(255, 178, 50);
 cv::Scalar YELLOW = cv::Scalar(0, 255, 255);
 cv::Scalar RED = cv::Scalar(0, 0, 255);
 
+enum State {
+    awake = 15, drowsy = 16, Look_Forward = 17
+};
+
 class Detection {
 private:
     std::unique_ptr<cv::dnn::Net> net;
-    bool drowsy_detected = false;
+    int detected_id = 0;
 public:
     Detection() {
         // read model
-        this->net = std::make_unique<cv::dnn::Net>(cv::dnn::readNet("../model/yolov5n.onnx"));
+        this->net = std::make_unique<cv::dnn::Net>(cv::dnn::readNet("../model/yolov5s.onnx"));
         // set cuda
         this->net->setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
 	    this->net->setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
@@ -70,6 +75,7 @@ public:
     cv::Mat post_process(cv::Mat&& input_image, const std::vector<cv::Mat>& outputs,
                          const std::vector<std::string>& class_name)
     {
+
         std::vector<int> class_ids;
         std::vector<float> confidences;
         std::vector<cv::Rect> boxes;
@@ -79,6 +85,8 @@ public:
         float *data = (float *)outputs[0].data;
         const int dimensions = 24;
         const int rows = 25200;
+
+        this->detected_id = 0;
 
         for (int i = 0; i < rows; ++i) {
             float confidence = data[4];
@@ -113,7 +121,6 @@ public:
         std::vector<int> indices;
         cv::dnn::NMSBoxes(boxes, confidences, SCORE_THRESHOLD,
                           NMS_THRESHOLD, indices);
-        bool drowsyDetected = false;
         for (int i = 0; i < indices.size(); ++i) {
             int idx = indices[i];
             cv::Rect box = boxes[idx];
@@ -128,9 +135,8 @@ public:
             std::string label = cv::format("%.2f", confidences[idx]);
             label = class_name[class_ids[idx]] + ":" + label;
             draw_label(input_image, std::move(label), std::move(left), std::move(top));
-            if (class_ids[idx] >= 16) drowsyDetected = true;
+            if (this->detected_id > class_ids[idx]) this->detected_id = class_ids[idx];
         }
-        this->drowsy_detected = drowsyDetected;
         return input_image;
     }
 
@@ -141,8 +147,8 @@ public:
         return this->net->getPerfProfile(layersTimes) / freq;
     }
 
-    bool isDrowsyDetected() {
-        return this->drowsy_detected;
+    int getDetectedId() {
+        return this->detected_id;
     }
 };
 
@@ -185,7 +191,7 @@ int main()
     Detection detection;
     std::vector<std::string> class_list{"dog","person","cat","tv","car","meatballs","marinara sauce","tomato soup","chicken noodle soup","french onion soup","chicken breast","ribs","pulled pork","hamburger","cavity","awake","drowsy","Look_Forward","yelling"};
     std::vector<cv::Mat> detections;
-    cv::VideoCapture cap(0);
+    cv::VideoCapture cap(cv::CAP_ANY+0);
     cv::Mat frame;
     ma_device_init(NULL, &deviceConfig, &device);
 
@@ -193,26 +199,27 @@ int main()
     bool playing = false;
     int drowsy_cnt = 0;
 
-    while (1) {
+    while (0) {
         cap.read(frame);
         detections = detection.pre_process(std::move(frame));
         cv::Mat img = detection.post_process(std::move(frame),
                                              detections, class_list);
-        if (detection.isDrowsyDetected()) { // start counting when drowsy detected
-            if (drowsy) drowsy_cnt++;
-            else drowsy = true;
-        } else { // reset when awake
-            drowsy = false;
-            drowsy_cnt = 0;
-            playing = false;
-            ma_device_stop(&device);
+        if (detection.getDetectedId() == static_cast<int>(State::drowsy)) {
+            drowsy_cnt += 14;
+        } else if (detection.getDetectedId() == static_cast<int>(State::Look_Forward)) {
+            drowsy_cnt += 8;
+        } else {
+            if (drowsy_cnt > 8) {
+                drowsy_cnt -= 8;
+            } else drowsy_cnt = 0;
         }
-
-        if (drowsy_cnt > 5) { // looping audio file
+        if (drowsy_cnt > 100) { // looping audio file
             if (!playing) {
                 playing = true;
                 ma_device_start(&device);
             }
+        } else if (drowsy_cnt <= 100 && playing == true) {
+            ma_device_stop(&device);
         }
 
         double t = detection.getFPS();

@@ -22,11 +22,11 @@ set(CMAKE_C_COMPILER_SYSROOT "/opt/homebrew/Cellar/aarch64-unknown-linux-gnu/11.
 set(CMAKE_COMPILER_SYSROOT "/opt/homebrew/Cellar/aarch64-unknown-linux-gnu/11.2.0_1/toolchain/bin/../aarch64-unknown-linux-gnu/sysroot/usr")
 
 
-set(CMAKE_AR "/usr/bin/ar")
+set(CMAKE_AR "/opt/homebrew/bin/aarch64-unknown-linux-gnu-ar")
 set(CMAKE_C_COMPILER_AR "/opt/homebrew/bin/aarch64-unknown-linux-gnu-gcc-ar")
-set(CMAKE_RANLIB "/usr/bin/ranlib")
+set(CMAKE_RANLIB "/opt/homebrew/bin/aarch64-unknown-linux-gnu-ranlib")
 set(CMAKE_C_COMPILER_RANLIB "/opt/homebrew/bin/aarch64-unknown-linux-gnu-gcc-ranlib")
-set(CMAKE_LINKER "/usr/bin/ld")
+set(CMAKE_LINKER "/opt/homebrew/bin/aarch64-unknown-linux-gnu-ld")
 set(CMAKE_MT "")
 set(CMAKE_TAPI "CMAKE_TAPI-NOTFOUND")
 set(CMAKE_COMPILER_IS_GNUCC 1)
