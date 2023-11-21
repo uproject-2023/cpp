@@ -3,7 +3,6 @@
 #include <string>
 #include <utility>
 #include <memory>
-#include <iostream>
 #define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio.h"
 
@@ -25,7 +24,7 @@ cv::Scalar YELLOW = cv::Scalar(0, 255, 255);
 cv::Scalar RED = cv::Scalar(0, 0, 255);
 
 enum State {
-    awake = 15, drowsy = 16, Look_Forward = 17
+    awake = 15, drowsy = 16, Look_Forward = 17, yelling = 18
 };
 
 class Detection {
@@ -35,7 +34,7 @@ private:
 public:
     Detection() {
         // read model
-        this->net = std::make_unique<cv::dnn::Net>(cv::dnn::readNet("../model/yolov5s.onnx"));
+        this->net = std::make_unique<cv::dnn::Net>(cv::dnn::readNet("../model/yolov5n.onnx"));
         // set cuda
         this->net->setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
 	    this->net->setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
@@ -135,18 +134,10 @@ public:
             std::string label = cv::format("%.2f", confidences[idx]);
             label = class_name[class_ids[idx]] + ":" + label;
             draw_label(input_image, std::move(label), std::move(left), std::move(top));
-            if (this->detected_id > class_ids[idx]) this->detected_id = class_ids[idx];
+            if (this->detected_id < class_ids[idx]) this->detected_id = class_ids[idx];
         }
         return input_image;
     }
-
-    /* return fps */
-    double getFPS() {
-        std::vector<double> layersTimes;
-        double freq = cv::getTickFrequency() / 1000;
-        return this->net->getPerfProfile(layersTimes) / freq;
-    }
-
     int getDetectedId() {
         return this->detected_id;
     }
@@ -191,45 +182,60 @@ int main()
     Detection detection;
     std::vector<std::string> class_list{"dog","person","cat","tv","car","meatballs","marinara sauce","tomato soup","chicken noodle soup","french onion soup","chicken breast","ribs","pulled pork","hamburger","cavity","awake","drowsy","Look_Forward","yelling"};
     std::vector<cv::Mat> detections;
-    cv::VideoCapture cap(cv::CAP_ANY+0);
+    cv::VideoCapture cap(0);
     cv::Mat frame;
     ma_device_init(NULL, &deviceConfig, &device);
+    time_t rawtime;
+
+
 
     bool drowsy = false;
     bool playing = false;
-    int drowsy_cnt = 0;
+    double drowsy_cnt = 0.0;
+    int cnt = 0; // when 300 reset
 
-    while (0) {
+    while (1) {
         cap.read(frame);
+        
         detections = detection.pre_process(std::move(frame));
         cv::Mat img = detection.post_process(std::move(frame),
                                              detections, class_list);
-        if (detection.getDetectedId() == static_cast<int>(State::drowsy)) {
-            drowsy_cnt += 14;
-        } else if (detection.getDetectedId() == static_cast<int>(State::Look_Forward)) {
-            drowsy_cnt += 8;
-        } else {
-            if (drowsy_cnt > 8) {
-                drowsy_cnt -= 8;
-            } else drowsy_cnt = 0;
-        }
-        if (drowsy_cnt > 100) { // looping audio file
-            if (!playing) {
-                playing = true;
-                ma_device_start(&device);
+        if (!drowsy) {
+            if (detection.getDetectedId() == static_cast<int>(State::drowsy)) {
+                drowsy_cnt += 1.5;
+            } else if (detection.getDetectedId() == static_cast<int>(State::Look_Forward)) {
+                drowsy_cnt += 0.7;
+            } else if (detection.getDetectedId() == static_cast<int>(State::yelling)) {
+                drowsy_cnt += 3.5;
             }
-        } else if (drowsy_cnt <= 100 && playing == true) {
-            ma_device_stop(&device);
+
+            if (drowsy_cnt >= 180.0) { // looping audio file
+                drowsy = true;
+                ma_device_start(&device);
+                drowsy_cnt = 0.0;
+                cnt = 0;
+            }
+        } else {
+            if (detection.getDetectedId() == static_cast<int>(State::awake)) {
+                drowsy_cnt += 2.0;
+            }
+
+            if (drowsy_cnt >= 100.0) { // stop audio file
+                drowsy = false;
+                ma_device_stop(&device);
+                drowsy_cnt = 0.0;
+                cnt = 0;
+            }
         }
 
-        double t = detection.getFPS();
-        std::string label = cv::format("Inference time : %.2f ms", t);
-        cv::putText(img, label, cv::Point(20, 40), FONT_FACE,
-                    FONT_SCALE, RED);
+        cnt += 2.0;
+        if (cnt >= 300.0) {
+            drowsy_cnt = 0.0;
+            cnt = 0;
+        }            
         cv::imshow("Output", std::move(img)); // show result
         if (cv::waitKey(27) >= 0) break;
     }
-
     ma_device_uninit(&device);
     ma_decoder_uninit(&decoder);
     return 0;
