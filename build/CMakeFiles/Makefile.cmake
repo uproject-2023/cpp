@@ -21,6 +21,7 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/Applications/CMake.app/Contents/share/cmake-3.27/Modules/CMakeDetermineCompiler.cmake"
   "/Applications/CMake.app/Contents/share/cmake-3.27/Modules/CMakeDetermineCompilerABI.cmake"
   "/Applications/CMake.app/Contents/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake"
+  "/Applications/CMake.app/Contents/share/cmake-3.27/Modules/CMakeDetermineSystem.cmake"
   "/Applications/CMake.app/Contents/share/cmake-3.27/Modules/CMakeFindBinUtils.cmake"
   "/Applications/CMake.app/Contents/share/cmake-3.27/Modules/CMakeGenericSystem.cmake"
   "/Applications/CMake.app/Contents/share/cmake-3.27/Modules/CMakeInitializeConfigs.cmake"
@@ -28,11 +29,13 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/Applications/CMake.app/Contents/share/cmake-3.27/Modules/CMakeParseImplicitIncludeInfo.cmake"
   "/Applications/CMake.app/Contents/share/cmake-3.27/Modules/CMakeParseImplicitLinkInfo.cmake"
   "/Applications/CMake.app/Contents/share/cmake-3.27/Modules/CMakeParseLibraryArchitecture.cmake"
+  "/Applications/CMake.app/Contents/share/cmake-3.27/Modules/CMakeSystem.cmake.in"
   "/Applications/CMake.app/Contents/share/cmake-3.27/Modules/CMakeSystemSpecificInformation.cmake"
   "/Applications/CMake.app/Contents/share/cmake-3.27/Modules/CMakeSystemSpecificInitialize.cmake"
   "/Applications/CMake.app/Contents/share/cmake-3.27/Modules/CMakeTestCCompiler.cmake"
   "/Applications/CMake.app/Contents/share/cmake-3.27/Modules/CMakeTestCXXCompiler.cmake"
   "/Applications/CMake.app/Contents/share/cmake-3.27/Modules/CMakeTestCompilerCommon.cmake"
+  "/Applications/CMake.app/Contents/share/cmake-3.27/Modules/CMakeUnixFindMake.cmake"
   "/Applications/CMake.app/Contents/share/cmake-3.27/Modules/Compiler/ADSP-DetermineCompiler.cmake"
   "/Applications/CMake.app/Contents/share/cmake-3.27/Modules/Compiler/ARMCC-DetermineCompiler.cmake"
   "/Applications/CMake.app/Contents/share/cmake-3.27/Modules/Compiler/ARMClang-DetermineCompiler.cmake"
@@ -117,6 +120,7 @@ set(CMAKE_MAKEFILE_OUTPUTS
 
 # Byproducts of CMake generate step:
 set(CMAKE_MAKEFILE_PRODUCTS
+  "CMakeFiles/3.27.4/CMakeSystem.cmake"
   "CMakeFiles/3.27.4/CMakeCCompiler.cmake"
   "CMakeFiles/3.27.4/CMakeCXXCompiler.cmake"
   "CMakeFiles/3.27.4/CMakeCCompiler.cmake"
