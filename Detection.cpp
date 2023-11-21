@@ -190,7 +190,6 @@ int main()
 
 
     bool drowsy = false;
-    bool playing = false;
     double drowsy_cnt = 0.0;
     int cnt = 0; // when 300 reset
 
@@ -202,9 +201,9 @@ int main()
                                              detections, class_list);
         if (!drowsy) {
             if (detection.getDetectedId() == static_cast<int>(State::drowsy)) {
-                drowsy_cnt += 1.7;
+                drowsy_cnt += 1.5;
             } else if (detection.getDetectedId() == static_cast<int>(State::Look_Forward)) {
-                drowsy_cnt += 0.9;
+                drowsy_cnt += 1.0;
             } else if (detection.getDetectedId() == static_cast<int>(State::yelling)) {
                 drowsy_cnt += 3.5;
             }
