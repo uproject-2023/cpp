@@ -3,25 +3,27 @@
 #include <string>
 #include <utility>
 #include <memory>
+#include <map>
+#include <iostream>
 #define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio.h"
 
 
 const float INPUT_WIDTH = 640.0;
 const float INPUT_HEIGHT = 640.0;
-const float SCORE_THRESHOLD = 0.5;
-const float NMS_THRESHOLD = 0.45;
-const float CONFIDENCE_THRESHOLD = 0.45;
+const float SCORE_THRESHOLD = 0.6;
+const float NMS_THRESHOLD = 0.55;
+const float CONFIDENCE_THRESHOLD = 0.55;
 
 const float FONT_SCALE = 0.7;
 const int FONT_FACE = cv::FONT_HERSHEY_SIMPLEX;
 const int THICKNESS = 1;
 
-
 cv::Scalar BLACK = cv::Scalar(0, 0, 0);
 cv::Scalar BLUE = cv::Scalar(255, 178, 50);
 cv::Scalar YELLOW = cv::Scalar(0, 255, 255);
 cv::Scalar RED = cv::Scalar(0, 0, 255);
+cv::Scalar GREEN = cv::Scalar(0, 255, 0);
 
 enum State {
     awake = 15, drowsy = 16, Look_Forward = 17, yelling = 18
@@ -34,7 +36,8 @@ private:
 public:
     Detection() {
         // read model
-        this->net = std::make_unique<cv::dnn::Net>(cv::dnn::readNet("../model/yolov5n.onnx"));
+        //yolov5n.onnx"
+        this->net = std::make_unique<cv::dnn::Net>(cv::dnn::readNet("../model/11_21_yolov8n.onnx"));
         // set cuda
         this->net->setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
 	    this->net->setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
@@ -71,51 +74,88 @@ public:
     }
 
     /* main process */
-    cv::Mat post_process(cv::Mat&& input_image, const std::vector<cv::Mat>& outputs,
+    cv::Mat post_process(cv::Mat&& input_image, std::vector<cv::Mat>& outputs,
                          const std::vector<std::string>& class_name)
     {
 
         std::vector<int> class_ids;
         std::vector<float> confidences;
         std::vector<cv::Rect> boxes;
+        bool isYolov8 = false;
+
+        int dimensions = outputs[0].size[2];
+        int rows = outputs[0].size[1];;
+
+        if (dimensions > rows) { // check is yolov8
+            isYolov8 = true;
+            rows = outputs[0].size[2];
+            dimensions = outputs[0].size[1];
+
+            outputs[0] = outputs[0].reshape(1, dimensions);
+            cv::transpose(outputs[0], outputs[0]);
+        }
 
         float x_factor = input_image.cols / INPUT_WIDTH;
         float y_factor = input_image.rows / INPUT_HEIGHT;
         float *data = (float *)outputs[0].data;
-        const int dimensions = 24;
-        const int rows = 25200;
 
         this->detected_id = 0;
 
         for (int i = 0; i < rows; ++i) {
-            float confidence = data[4];
-            if (confidence >= CONFIDENCE_THRESHOLD) {
-                float* classes_scores = data + 5;
-                cv::Mat scores(1, class_name.size(), CV_32FC1,
-                               classes_scores);
+            if (!isYolov8) { // if yolov5
+                float confidence = data[4];
+                if (confidence >= CONFIDENCE_THRESHOLD) {
+                    float* classes_scores = data + 5;
+                    cv::Mat scores(1, class_name.size(), CV_32FC1,
+                                   classes_scores);
 
+                    cv::Point class_id;
+                    double max_class_score;
+                    cv::minMaxLoc(scores, 0, &max_class_score,
+                                  0, &class_id);
+                    if (max_class_score > SCORE_THRESHOLD) {
+                        confidences.emplace_back(confidence);
+                        class_ids.emplace_back(class_id.x);
+
+                        float cx = data[0];
+                        float cy = data[1];
+                        float w = data[2];
+                        float h = data[3];
+
+                        int left = (int)((cx - 0.5 * w) * x_factor);
+                        int top = (int)((cy - 0.5 * h) * y_factor);
+                        int width = (int)(w * x_factor);
+                        int height = (int)(h * y_factor);
+                        boxes.emplace_back(cv::Rect(left, top,
+                                           width, height));
+                    }   
+                }
+            } else { // if yolov8
+                float *classes_scores = data+4;
+                cv::Mat scores(1, class_name.size(), CV_32FC1, classes_scores);
                 cv::Point class_id;
-                double max_class_score;
-                cv::minMaxLoc(scores, 0, &max_class_score,
-                              0, &class_id);
-                if (max_class_score > SCORE_THRESHOLD) {
-                    confidences.emplace_back(confidence);
+                double maxClassScore;
+                minMaxLoc(scores, 0, &maxClassScore, 0, &class_id);
+
+                if (maxClassScore > CONFIDENCE_THRESHOLD) {
+                    confidences.emplace_back(maxClassScore);
                     class_ids.emplace_back(class_id.x);
 
-                    float cx = data[0];
-                    float cy = data[1];
+                    float x = data[0];
+                    float y = data[1];
                     float w = data[2];
                     float h = data[3];
 
-                    int left = (int)((cx - 0.5 * w) * x_factor);
-                    int top = (int)((cy - 0.5 * h) * y_factor);
-                    int width = (int)(w * x_factor);
-                    int height = (int)(h * y_factor);
-                    boxes.emplace_back(cv::Rect(left, top,
-                                       width, height));
-                }   
+                    int left = int((x - 0.5 * w) * x_factor);
+                    int top = int((y - 0.5 * h) * y_factor);
+
+                    int width = int(w * x_factor);
+                    int height = int(h * y_factor);
+
+                     boxes.emplace_back(cv::Rect(left, top, width, height));
+                }
             }
-            data += 24;
+            data += dimensions;
         }	
         std::vector<int> indices;
         cv::dnn::NMSBoxes(boxes, confidences, SCORE_THRESHOLD,
@@ -185,14 +225,20 @@ int main()
     cv::VideoCapture cap(0);
     cv::Mat frame;
     ma_device_init(NULL, &deviceConfig, &device);
-    time_t rawtime;
+    std::string perclos = "";
 
 
-
-    bool drowsy = false;
+    std::map<std::string, int> detectedCount{{"awake", 0}, {"drowsy", 0}, {"Look_Forward", 0}, {"yelling", 0}};
+    bool drowsy = false; // play mp3 file
     double drowsy_cnt = 0.0;
-    int cnt = 0; // when 300 reset
+    int timer = 0; // reset timer, drowsy, result every 30 sec
+    int awake_result = 0;
+    int drowsy_result = 0;
+    int look_forward_result = 0;
+    int yelling_result = 0;
+    cv::Scalar currentTextColor;
 
+    /* result */
     while (1) {
         cap.read(frame);
         
@@ -201,37 +247,72 @@ int main()
                                              detections, class_list);
         if (!drowsy) {
             if (detection.getDetectedId() == static_cast<int>(State::drowsy)) {
-                drowsy_cnt += 1.5;
-            } else if (detection.getDetectedId() == static_cast<int>(State::Look_Forward)) {
                 drowsy_cnt += 1.0;
+                detectedCount["drowsy"] += 130;
+            } else if (detection.getDetectedId() == static_cast<int>(State::Look_Forward)) {
+                drowsy_cnt += 0.7;
+                detectedCount["Look_Forward"] += 130;
             } else if (detection.getDetectedId() == static_cast<int>(State::yelling)) {
-                drowsy_cnt += 3.5;
+                drowsy_cnt += 2.0;
+                detectedCount["yelling"] += 130;
+            } else if (detection.getDetectedId() == static_cast<int>(State::awake)) {
+                detectedCount["awake"] += 130;
             }
 
-            if (drowsy_cnt >= 180.0) { // looping audio file
+            if (drowsy_cnt < 81.7) {
+                perclos = "Safe";
+                currentTextColor = GREEN;
+            } else if ((drowsy_cnt >= 81.7) && (drowsy_cnt < 138.0)) {
+                perclos = "Drowsiness Suspiction";
+                currentTextColor = YELLOW;
+            } else if (drowsy_cnt >= 138.0) { // looping audio file
+                perclos = "Drowsy Driving";
+                currentTextColor = RED;
                 drowsy = true;
                 ma_device_start(&device);
                 drowsy_cnt = 0.0;
-                cnt = 0;
+                timer = 0;
+                awake_result = detectedCount["awake"];
+                look_forward_result = detectedCount["Look_Forward"];
+                drowsy_result = detectedCount["drowsy"];
+                yelling_result = detectedCount["yelling"];
+                detectedCount["drowsy"] = 0;
+                detectedCount["Look_Forward"] = 0;
+                detectedCount["yelling"] = 0;
+                detectedCount["awake"] = 0;
             }
         } else {
             if (detection.getDetectedId() == static_cast<int>(State::awake)) {
-                drowsy_cnt += 2.2;
+                drowsy_cnt += 1.5;
             }
 
-            if (drowsy_cnt >= 100.0) { // stop audio file
+            if (drowsy_cnt >= 77.0) { // stop audio file
                 drowsy = false;
                 ma_device_stop(&device);
                 drowsy_cnt = 0.0;
-                cnt = 0;
+                timer = 0;
+                awake_result = detectedCount["awake"];
+                look_forward_result = detectedCount["Look_Forward"];
+                drowsy_result = detectedCount["drowsy"];
+                yelling_result = detectedCount["yelling"];
+                detectedCount["drowsy"] = 0;
+                detectedCount["Look_Forward"] = 0;
+                detectedCount["yelling"] = 0;
+                detectedCount["awake"] = 0;
             }
         }
 
-        cnt += 2.0;
-        if (cnt >= 300.0) {
+        timer += 1.0;
+        if (timer >= 230.0) {
             drowsy_cnt = 0.0;
-            cnt = 0;
-        }            
+            timer = 0;
+
+        }
+        cv::putText(img, perclos, cv::Point(40, 50), cv::FONT_HERSHEY_COMPLEX, 2, std::move(currentTextColor), THICKNESS);
+        cv::putText(img, "awake : " + std::to_string(awake_result) + "msec", cv::Point(40, 100), cv::FONT_HERSHEY_COMPLEX, FONT_SCALE, BLACK, THICKNESS);
+        cv::putText(img, "look_forward : " + std::to_string(look_forward_result) + "msec", cv::Point(40, 150), cv::FONT_HERSHEY_COMPLEX, FONT_SCALE, BLACK, THICKNESS);
+        cv::putText(img, "drowsy : " + std::to_string(drowsy_result) + "msec", cv::Point(40, 200), cv::FONT_HERSHEY_COMPLEX, FONT_SCALE, BLACK, THICKNESS);
+        cv::putText(img, "yelling : " + std::to_string(yelling_result) + "msec", cv::Point(40, 250), cv::FONT_HERSHEY_COMPLEX, FONT_SCALE, BLACK, THICKNESS);
         cv::imshow("Output", std::move(img)); // show result
         if (cv::waitKey(27) >= 0) break;
     }
