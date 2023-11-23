@@ -8,6 +8,16 @@
 #define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#elif __APPLE__
+#include <mach-o/dyld.h>
+#include <climits>
+#else
+#include <unistd.h>
+#endif
+#include <experimental/filesystem>
+
 
 const float INPUT_WIDTH = 640.0;
 const float INPUT_HEIGHT = 640.0;
@@ -197,15 +207,62 @@ void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uin
     (void)pInput;
 }
 
-int main()
+bool check_file_exists(const std::string& path) {
+    std::ifstream f(path.c_str());
+    return f.good();
+}
+
+std::experimental::filesystem::path get_executable_path() {
+#ifdef _WIN32
+    wchar_t szPath[MAX_PATH];
+    GetModuleFileNameW(nullptr, szPath, MAX_PATH);
+    return std::experimental::filesystem::path{szPath}.parent_path();
+#elif __APPLE__
+    char szPath[PATH_MAX];
+    uint32_t len = PATH_MAX;
+    if (!_NSGetExecutablePath(szPath, &len))
+        return std::experimental::filesystem::path{szPath}.parent_path();
+    return "";
+#else
+    char szPath[PATH_MAX];
+    ssize_t len = readlink("/proc/self/exe", szPath, sizeof(szPath) - 1);
+    if (len != -1) {
+        szPath[len] = '\0';
+        return std::experimental::filesystem::path{szPath}.parent_path();
+    }
+    return "";
+#endif
+}
+
+int main(int argc, char* argv[])
 {
+    if (argc > 2) {
+        std::cerr << "Usage: " << argv[0] << " <model_path>" << std::endl;
+        return 1;
+    }
+
+    std::experimental::filesystem::path sharePath = get_executable_path().parent_path();
+    std::string modelPath = (argc == 2) ? argv[1] : sharePath.string() + "/model/yolo-v5n.onnx";
+
+    if (!check_file_exists(modelPath)) {
+        std::cerr << "Model: " << modelPath << " not exists." << std::endl;
+        modelPath = sharePath.string() + "/model/yolo-v5n.onnx";
+        if (!check_file_exists(modelPath)) {
+            std::cerr << "Model: " << modelPath << " not exists." << std::endl;
+            return -2;
+        }
+    }
+
     /* set audio file */
     ma_result result;
     ma_decoder decoder;
     ma_device_config deviceConfig;
     ma_device device;
-    result = ma_decoder_init_file("../sound/sample.mp3", NULL, &decoder);
+
+    std::string soundPath = sharePath.string() + "/sound/sample.mp3";
+    result = ma_decoder_init_file(soundPath.c_str(), NULL, &decoder);
     if (result != MA_SUCCESS) {
+        std::cerr << "Sound: " << soundPath << " not exists." << std::endl;
         return -2;
     }
     
